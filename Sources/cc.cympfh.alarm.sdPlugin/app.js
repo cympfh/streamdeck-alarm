@@ -17,6 +17,7 @@ $SD.on('connected', (jsonObj) => connected(jsonObj));
 function connected(jsn) {
     // Subscribe to the willAppear and other events
     $SD.on('cc.cympfh.alarm.action.willAppear', (jsonObj) => action.onWillAppear(jsonObj));
+    $SD.on('cc.cympfh.alarm.action.willDisappear', (jsonObj) => action.onWillDisappear(jsonObj));
     $SD.on('cc.cympfh.alarm.action.keyUp', (jsonObj) => action.onKeyUp(jsonObj));
     $SD.on('cc.cympfh.alarm.action.keyDown', (jsonObj) => action.onKeyDown(jsonObj));
     $SD.on('cc.cympfh.alarm.action.sendToPlugin', (jsonObj) => action.onSendToPlugin(jsonObj));
@@ -77,6 +78,11 @@ const action = {
             this.clock(jsn);
             this.setTitle(jsn);
         }, 1000);
+    },
+
+    onWillDisappear: function(jsn) {
+        console.log("App will disappear", jsn.payload.settings);
+        clearInterval(this.settings.clock);
     },
 
     reset: function() {
