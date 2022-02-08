@@ -1,0 +1,38 @@
+{
+  "Actions": [
+    {
+      "Icon": "action/images/actionimage",
+      "Name": "Yet Another Alarm",
+      "States": [
+        {
+          "Image": "action/images/action"
+        }
+      ],
+      "Tooltip": "This is an example tooltip",
+      "UUID": "cc.cympfh.alarm.action"
+    }
+  ],
+  "SDKVersion": 2,
+  "Author": "cympfh",
+  "CodePath": "index.html",
+  "PropertyInspectorPath": "propertyinspector/index.html",
+  "Description": "Example description",
+  "Name": "Yet Another Alarm",
+  "Icon": "action/images/action",
+  "URL": "https://www.elgato.com/en/gaming/stream-deck",
+  "Version": "1.0.1",
+  "OS": [
+    {
+        "Platform": "mac",
+        "MinimumVersion" : "10.11"
+    },
+    {
+        "Platform": "windows",
+        "MinimumVersion" : "10"
+    }
+  ],
+  "Software":
+    {
+        "MinimumVersion" : "4.1"
+  }
+}

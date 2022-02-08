@@ -1,8 +1,8 @@
 {
   "Description": "Nimm diese Vorlage für dein erstes Plugin", 
-  "Name": "Stream Deck Template", 
+  "Name": "Yet Another Alarm", 
   "Category": "Templates", 
-  "com.elgato.template.action": {
+  "cc.cympfh.alarm.action": {
     "Name": "Action", 
     "Tooltip": "Dies ist die einzige 'Action' in diesem Template"
   },

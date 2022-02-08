@@ -16,14 +16,15 @@ $SD.on('connected', (jsonObj) => connected(jsonObj));
 
 function connected(jsn) {
     // Subscribe to the willAppear and other events
-    $SD.on('com.elgato.template.action.willAppear', (jsonObj) => action.onWillAppear(jsonObj));
-    $SD.on('com.elgato.template.action.keyUp', (jsonObj) => action.onKeyUp(jsonObj));
-    $SD.on('com.elgato.template.action.sendToPlugin', (jsonObj) => action.onSendToPlugin(jsonObj));
-    $SD.on('com.elgato.template.action.didReceiveSettings', (jsonObj) => action.onDidReceiveSettings(jsonObj));
-    $SD.on('com.elgato.template.action.propertyInspectorDidAppear', (jsonObj) => {
+    $SD.on('cc.cympfh.alarm.action.willAppear', (jsonObj) => action.onWillAppear(jsonObj));
+    $SD.on('cc.cympfh.alarm.action.keyUp', (jsonObj) => action.onKeyUp(jsonObj));
+    $SD.on('cc.cympfh.alarm.action.keyDown', (jsonObj) => action.onKeyDown(jsonObj));
+    $SD.on('cc.cympfh.alarm.action.sendToPlugin', (jsonObj) => action.onSendToPlugin(jsonObj));
+    $SD.on('cc.cympfh.alarm.action.didReceiveSettings', (jsonObj) => action.onDidReceiveSettings(jsonObj));
+    $SD.on('cc.cympfh.alarm.action.propertyInspectorDidAppear', (jsonObj) => {
         console.log('%c%s', 'color: white; background: black; font-size: 13px;', '[app.js]propertyInspectorDidAppear:');
     });
-    $SD.on('com.elgato.template.action.propertyInspectorDidDisappear', (jsonObj) => {
+    $SD.on('cc.cympfh.alarm.action.propertyInspectorDidDisappear', (jsonObj) => {
         console.log('%c%s', 'color: white; background: red; font-size: 13px;', '[app.js]propertyInspectorDidDisappear:');
     });
 };
@@ -31,7 +32,7 @@ function connected(jsn) {
 // ACTIONS
 
 const action = {
-    settings:{},
+    settings: {},
     onDidReceiveSettings: function(jsn) {
         console.log('%c%s', 'color: white; background: red; font-size: 15px;', '[app.js]onDidReceiveSettings:');
 
@@ -50,47 +51,59 @@ const action = {
          this.setTitle(jsn);
     },
 
-    /** 
+    /**
      * The 'willAppear' event is the first event a key will receive, right before it gets
      * shown on your Stream Deck and/or in Stream Deck software.
      * This event is a good place to setup your plugin and look at current settings (if any),
      * which are embedded in the events payload.
      */
 
-    onWillAppear: function (jsn) {
+    onWillAppear: function(jsn) {
         console.log("You can cache your settings in 'onWillAppear'", jsn.payload.settings);
         /**
          * The willAppear event carries your saved settings (if any). You can use these settings
-         * to setup your plugin or save the settings for later use. 
+         * to setup your plugin or save the settings for later use.
          * If you want to request settings at a later time, you can do so using the
-         * 'getSettings' event, which will tell Stream Deck to send your data 
+         * 'getSettings' event, which will tell Stream Deck to send your data
          * (in the 'didReceiveSettings above)
-         * 
+         *
          * $SD.api.getSettings(jsn.context);
         */
         this.settings = jsn.payload.settings;
 
         // Nothing in the settings pre-fill, just something for demonstration purposes
         if (!this.settings || Object.keys(this.settings).length === 0) {
-            this.settings.mynameinput = 'TEMPLATE';
+            this.settings.mynameinput = 'HELLO';
         }
         this.setTitle(jsn);
     },
 
-    onKeyUp: function (jsn) {
-        this.doSomeThing(jsn, 'onKeyUp', 'green');
+    onKeyDown: function(jsn) {
+        this.doSomeThing(jsn, 'onKeyDown', 'blue');
+        this.settings.mynameinput = 'WORLD';
+        this.setTitle(jsn);
     },
 
-    onSendToPlugin: function (jsn) {
+    onKeyUp: function(jsn) {
+        this.doSomeThing(jsn, 'onKeyUp', 'green');
+        this.settings.mynameinput = '!';
+        setTimeout(() => {
+          this.settings.mynameinput = 'HELLO';
+          this.setTitle(jsn);
+        }, 2000);
+        this.setTitle(jsn);
+    },
+
+    onSendToPlugin: function(jsn) {
         /**
-         * This is a message sent directly from the Property Inspector 
-         * (e.g. some value, which is not saved to settings) 
+         * This is a message sent directly from the Property Inspector
+         * (e.g. some value, which is not saved to settings)
          * You can send this event from Property Inspector (see there for an example)
-         */ 
+         */
 
         const sdpi_collection = Utils.getProp(jsn, 'payload.sdpi_collection', {});
         if (sdpi_collection.value && sdpi_collection.value !== undefined) {
-            this.doSomeThing({ [sdpi_collection.key] : sdpi_collection.value }, 'onSendToPlugin', 'fuchsia');            
+            this.doSomeThing({ [sdpi_collection.key] : sdpi_collection.value }, 'onSendToPlugin', 'fuchsia');
         }
     },
 
@@ -99,7 +112,7 @@ const action = {
      * It is not used in this example plugin.
      */
 
-    saveSettings: function (jsn, sdpi_collection) {
+    saveSettings: function(jsn, sdpi_collection) {
         console.log('saveSettings:', jsn);
         if (sdpi_collection.hasOwnProperty('key') && sdpi_collection.key != '') {
             if (sdpi_collection.value && sdpi_collection.value !== undefined) {
@@ -115,9 +128,9 @@ const action = {
      * stored in settings.
      * If you enter something into Property Inspector's name field (in this demo),
      * it will get the title of your key.
-     * 
+     *
      * @param {JSON} jsn // The JSON object passed from Stream Deck to the plugin, which contains the plugin's context
-     * 
+     *
      */
 
     setTitle: function(jsn) {
@@ -136,7 +149,7 @@ const action = {
     doSomeThing: function(inJsonData, caller, tagColor) {
         console.log('%c%s', `color: white; background: ${tagColor || 'grey'}; font-size: 15px;`, `[app.js]doSomeThing from: ${caller}`);
         // console.log(inJsonData);
-    }, 
+    },
 
 
 };
