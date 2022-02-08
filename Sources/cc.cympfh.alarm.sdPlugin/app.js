@@ -37,7 +37,7 @@ const action = {
         console.log('%c%s', 'color: white; background: red; font-size: 15px;', '[app.js]onDidReceiveSettings:');
 
         this.settings = Utils.getProp(jsn, 'payload.settings', {});
-        this.doSomeThing(this.settings, 'onDidReceiveSettings', 'orange');
+        this.debug(this.settings, 'onDidReceiveSettings', 'orange');
 
         /**
          * In this example we put a HTML-input element with id='mynameinput'
@@ -69,28 +69,71 @@ const action = {
          *
          * $SD.api.getSettings(jsn.context);
         */
+        this.alert = new Audio('alert.mp3');
         this.settings = jsn.payload.settings;
-
-        // Nothing in the settings pre-fill, just something for demonstration purposes
-        if (!this.settings || Object.keys(this.settings).length === 0) {
-            this.settings.mynameinput = 'HELLO';
-        }
+        this.reset();
         this.setTitle(jsn);
+        this.settings.clock = setInterval(() => {
+            this.clock(jsn);
+            this.setTitle(jsn);
+        }, 1000);
+    },
+
+    reset: function() {
+        this.settings.state = 'wait';
+        this.settings.remain = 30;
+        this.alert.pause();
+        this.settings.alerting = false;
+    },
+
+    clock: function(jsn) {
+        this.debug(`state=${this.settings.state}, context=${jsn.context}, alerting=${this.settings.alerting}, alert.ended=${this.alert.ended}`, 'clock');
+        if (this.settings.state == 'going') {
+            this.settings.remain -= 1;
+            if (this.settings.remain < 0) {
+                this.settings.state = 'over';
+                this.alert.play();
+                this.settings.alerting = true;
+            }
+        } else if (this.settings.state === 'over') {
+            if (!this.alert.ended || !this.settings.alerting) {
+                this.alert.play();
+                this.settings.alerting = true;
+            }
+        }
+        if (this.alert.ended) {
+            this.settings.alerting = false;
+        }
+    },
+
+    start: function() {
+        this.settings.state = 'going';
+    },
+
+    inc: function(dt) {
+        this.settings.remain += dt;
+        let diff = dt - (this.settings.remain % dt);
+        if (diff <= 2) {
+            this.settings.remain += diff;
+        }
     },
 
     onKeyDown: function(jsn) {
-        this.doSomeThing(jsn, 'onKeyDown', 'blue');
-        this.settings.mynameinput = 'WORLD';
-        this.setTitle(jsn);
+        this.debug(jsn, 'onKeyDown', 'blue');
+        this.settings.lastKeyDownTime = new Date();
     },
 
     onKeyUp: function(jsn) {
-        this.doSomeThing(jsn, 'onKeyUp', 'green');
-        this.settings.mynameinput = '!';
-        setTimeout(() => {
-          this.settings.mynameinput = 'HELLO';
-          this.setTitle(jsn);
-        }, 2000);
+        this.debug(jsn, 'onKeyUp', 'green');
+        if ((new Date()) - this.settings.lastKeyDownTime > 1000) {
+            this.reset();
+        } else if (this.settings.state === 'wait') {
+            this.start();
+        } else if (this.settings.state === 'going') {
+            this.inc(30);
+        } else if (this.settings.state === 'over') {
+            this.reset();
+        }
         this.setTitle(jsn);
     },
 
@@ -103,7 +146,7 @@ const action = {
 
         const sdpi_collection = Utils.getProp(jsn, 'payload.sdpi_collection', {});
         if (sdpi_collection.value && sdpi_collection.value !== undefined) {
-            this.doSomeThing({ [sdpi_collection.key] : sdpi_collection.value }, 'onSendToPlugin', 'fuchsia');
+            this.debug({ [sdpi_collection.key] : sdpi_collection.value }, 'onSendToPlugin', 'fuchsia');
         }
     },
 
@@ -134,10 +177,16 @@ const action = {
      */
 
     setTitle: function(jsn) {
-        if (this.settings && this.settings.hasOwnProperty('mynameinput')) {
-            console.log("watch the key on your StreamDeck - it got a new title...", this.settings.mynameinput);
-            $SD.api.setTitle(jsn.context, this.settings.mynameinput);
+        var title = '';
+        if (this.settings.remain >= 0) {
+            let min = Math.floor(this.settings.remain / 60);
+            let sec = this.settings.remain % 60;
+            title = `${min}:${String(sec).padStart(2, '0')}`;
+        } else {
+            title = 'OVER';
         }
+        console.log("watch the key on your StreamDeck - it got a new title...", title);
+        $SD.api.setTitle(jsn.context, title);
     },
 
     /**
@@ -146,9 +195,9 @@ const action = {
      * from Stream Deck.
      */
 
-    doSomeThing: function(inJsonData, caller, tagColor) {
-        console.log('%c%s', `color: white; background: ${tagColor || 'grey'}; font-size: 15px;`, `[app.js]doSomeThing from: ${caller}`);
-        // console.log(inJsonData);
+    debug: function(msg, caller, tagColor) {
+        console.log('%c%s', `color: white; background: ${tagColor || 'grey'}; font-size: 15px;`, `[app.js] from: ${caller}`);
+        console.log(msg);
     },
 
 
