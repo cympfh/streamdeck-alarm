@@ -1,9 +1,9 @@
 {
-  "Description": "Nimm diese Vorlage für dein erstes Plugin", 
-  "Name": "Yet Another Alarm", 
-  "Category": "Templates", 
+  "Description": "Nimm diese Vorlage für dein erstes Plugin",
+  "Name": "Kitchen Timer",
+  "Category": "Util",
   "cc.cympfh.alarm.action": {
-    "Name": "Action", 
+    "Name": "Kitchen Timer",
     "Tooltip": "Dies ist die einzige 'Action' in diesem Template"
   },
   "Localization": {

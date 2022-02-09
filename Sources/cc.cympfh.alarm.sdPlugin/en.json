@@ -1,10 +1,10 @@
 {
   "Description": "Use this to create your own plugin", 
-  "Name": "Yet Another Alarm", 
-  "Category": "Templates", 
+  "Name": "Kitchen Timer",
+  "Category": "Util",
   "cc.cympfh.alarm.action": {
-    "Name": "Action", 
-    "Tooltip": "This is the only action in this plugin"
+    "Name": "Kitchen Timer",
+    "Tooltip": "Click to Start"
   },
   "Localization": {
     "More info": "More info",

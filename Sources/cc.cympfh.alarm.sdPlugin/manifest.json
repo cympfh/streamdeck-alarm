@@ -2,13 +2,13 @@
   "Actions": [
     {
       "Icon": "action/images/actionimage",
-      "Name": "Yet Another Alarm",
+      "Name": "KitchenTimer",
       "States": [
         {
           "Image": "action/images/action"
         }
       ],
-      "Tooltip": "This is an example tooltip",
+      "Tooltip": "Kitchen Timer",
       "UUID": "cc.cympfh.alarm.action"
     }
   ],
@@ -16,8 +16,8 @@
   "Author": "cympfh",
   "CodePath": "index.html",
   "PropertyInspectorPath": "propertyinspector/index.html",
-  "Description": "Example description",
-  "Name": "Yet Another Alarm",
+  "Description": "Yet Another Timer",
+  "Name": "KitchenTimer",
   "Icon": "action/images/action",
   "URL": "https://www.elgato.com/en/gaming/stream-deck",
   "Version": "1.0.1",
