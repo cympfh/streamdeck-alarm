@@ -24,6 +24,8 @@ const action = {
         this.debug(jsn, 'onDidReceiveSettings', 'red');
         this.settings = Utils.getProp(jsn, 'payload.settings', {});
         this.debug(this.settings);
+        this.startClock(jsn);
+        this.reset();
         this.setTitle(jsn);
     },
 
@@ -36,16 +38,22 @@ const action = {
         } else {
             this.debug('Already load alert.mp3');
         }
-        if (!this.clockId) {
-            this.debug('Register New Clock');
+        this.startClock(jsn);
+        this.setTitle(jsn);
+    },
+
+    startClock: function(jsn) {
+        if (this.clockId) {
+            this.debug('Already a clock is working', 'startClock');
+        } else {
+            this.debug('Register New Clock', 'startClock');
             this.reset();
             this.clockId = setInterval(() => {
-                this.clock(jsn);
+                this.clock();
                 this.setTitle(jsn);
             }, 1000);
             this.debug(`clockId = ${this.clockId}`);
         }
-        this.setTitle(jsn);
     },
 
     onWillDisappear: function(jsn) {
@@ -55,14 +63,13 @@ const action = {
 
     reset: function() {
         this.settings.state = 'wait';
-        this.settings.remain = 30;
+        this.settings.remain = parseInt(this.settings.default_remain_time) || 30;
         this.alert.pause();
         this.settings.alerting = false;
     },
 
-    clock: function(jsn) {
-        this.debug(jsn, 'clock');
-        this.debug(this.settings);
+    clock: function() {
+        this.debug(this.settings, 'clock');
         if (this.settings.state == 'going') {
             this.settings.remain -= 1;
             if (this.settings.remain < 0) {
@@ -85,7 +92,8 @@ const action = {
         this.settings.state = 'going';
     },
 
-    inc: function(dt) {
+    inc: function() {
+        let dt = parseInt(this.settings.dt) || 30;
         this.settings.remain += dt;
         let diff = dt - (this.settings.remain % dt);
         if (diff <= 2) {
@@ -106,7 +114,7 @@ const action = {
         } else if (this.settings.state === 'wait') {
             this.start();
         } else if (this.settings.state === 'going') {
-            this.inc(30);
+            this.inc();
         } else if (this.settings.state === 'over') {
             this.reset();
         }
