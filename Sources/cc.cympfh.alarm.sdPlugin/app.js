@@ -20,18 +20,14 @@ function connected(jsn) {
 // ACTIONS
 const action = {
     settings: {},
-    onDidReceiveSettings: function(jsn) {
-        this.debug(jsn, 'onDidReceiveSettings', 'red');
-        this.settings = Utils.getProp(jsn, 'payload.settings', {});
-        this.debug(this.settings);
-        this.startClock(jsn);
-        this.reset();
-        this.setTitle(jsn);
-    },
+    state: {},
 
-    onWillAppear: function(jsn) {
-        this.debug(jsn, 'onWillAppear', 'orange');
-        this.debug(this.settings);
+    initialize: function(jsn) {
+        this.debug('init', 'initialize');
+        if (!this.state.default_remain || !this.state.dt) {
+            this.debug('Request Settings');
+            $SD.api.getSettings(jsn.context);
+        }
         if (!this.alert) {
             this.debug('Loading alert.mp3');
             this.alert = new Audio('alert.mp3');
@@ -39,7 +35,6 @@ const action = {
             this.debug('Already load alert.mp3');
         }
         this.startClock(jsn);
-        this.setTitle(jsn);
     },
 
     startClock: function(jsn) {
@@ -47,13 +42,28 @@ const action = {
             this.debug('Already a clock is working', 'startClock');
         } else {
             this.debug('Register New Clock', 'startClock');
-            this.reset();
+            this.reset(jsn);
             this.clockId = setInterval(() => {
-                this.clock();
-                this.setTitle(jsn);
+                this.clock(jsn);
             }, 1000);
             this.debug(`clockId = ${this.clockId}`);
         }
+    },
+
+    // update this.state by received setting
+    onDidReceiveSettings: function(jsn) {
+        this.debug(jsn, 'onDidReceiveSettings', 'red');
+        this.settings = Utils.getProp(jsn, 'payload.settings', {});
+        this.debug(this.settings);
+        this.state.default_remain = parseInt(this.settings.default_remain) || 30;
+        this.state.dt = parseInt(this.settings.dt) || 30;
+        this.debug(this.state);
+        this.reset(jsn);
+    },
+
+    onWillAppear: function(jsn) {
+        this.debug(jsn, 'onWillAppear', 'orange');
+        this.initialize(jsn);
     },
 
     onWillDisappear: function(jsn) {
@@ -61,64 +71,68 @@ const action = {
         this.debug(`clockId = ${this.clockId}`);
     },
 
-    reset: function() {
-        this.settings.state = 'wait';
-        this.settings.remain = parseInt(this.settings.default_remain_time) || 30;
-        this.alert.pause();
-        this.settings.alerting = false;
+    reset: function(jsn) {
+        this.state.code = 'wait';
+        this.state.remain = this.state.default_remain;
+        if (this.alert) {
+            this.alert.pause();
+        }
+        this.state.alerting = false;
+        this.setTitle(jsn);
     },
 
-    clock: function() {
-        this.debug(this.settings, 'clock');
-        if (this.settings.state == 'going') {
-            this.settings.remain -= 1;
-            if (this.settings.remain < 0) {
-                this.settings.state = 'over';
+    clock: function(jsn) {
+        this.debug(this.state, 'clock');
+        if (this.state.code == 'going') {
+            this.state.remain -= 1;
+            if (this.state.remain < 0) {
+                this.state.code = 'over';
                 this.alert.play();
-                this.settings.alerting = true;
+                this.state.alerting = true;
             }
-        } else if (this.settings.state === 'over') {
-            if (!this.alert.ended || !this.settings.alerting) {
+        } else if (this.state.code === 'over') {
+            if (!this.alert.ended || !this.state.alerting) {
                 this.alert.play();
-                this.settings.alerting = true;
+                this.state.alerting = true;
             }
         }
         if (this.alert.ended) {
-            this.settings.alerting = false;
+            this.state.alerting = false;
         }
+        this.debug(this.state);
+        this.setTitle(jsn);
     },
 
     start: function() {
-        this.settings.state = 'going';
+        this.state.code = 'going';
     },
 
     inc: function() {
-        let dt = parseInt(this.settings.dt) || 30;
-        this.settings.remain += dt;
-        let diff = dt - (this.settings.remain % dt);
+        const dt = this.state.dt;
+        this.state.remain += dt;
+        let diff = dt - (this.state.remain % dt);
         if (diff <= 2) {
-            this.settings.remain += diff;
+            this.state.remain += diff;
         }
     },
 
     onKeyDown: function(jsn) {
         this.debug(jsn, 'onKeyDown', 'blue');
-        this.settings.lastKeyDownTime = new Date();
-        this.debug(this.settings);
+        this.state.lastKeyDownTime = new Date();
+        this.debug(this.state);
     },
 
     onKeyUp: function(jsn) {
-        this.debug(jsn, 'onKeyUp', 'green');
-        if ((new Date()) - this.settings.lastKeyDownTime > 1000) {
-            this.reset();
-        } else if (this.settings.state === 'wait') {
+        this.debug(this.state, 'onKeyUp', 'green');
+        if ((new Date()) - this.state.lastKeyDownTime > 1000) {
+            this.reset(jsn);
+        } else if (this.state.code === 'wait') {
             this.start();
-        } else if (this.settings.state === 'going') {
+        } else if (this.state.code === 'going') {
             this.inc();
-        } else if (this.settings.state === 'over') {
-            this.reset();
+        } else if (this.state.code === 'over') {
+            this.reset(jsn);
         }
-        this.debug(this.settings);
         this.setTitle(jsn);
     },
 
@@ -142,9 +156,9 @@ const action = {
 
     setTitle: function(jsn) {
         var title = '';
-        if (this.settings.remain >= 0) {
-            let min = Math.floor(this.settings.remain / 60);
-            let sec = this.settings.remain % 60;
+        if (this.state.remain >= 0) {
+            let min = Math.floor(this.state.remain / 60);
+            let sec = this.state.remain % 60;
             title = `${min}:${String(sec).padStart(2, '0')}`;
         } else {
             title = 'OVER';
